@@ -1,5 +1,6 @@
 package com.example.newspapertemplate.compose
 
+import android.graphics.Paint
 import android.graphics.Point
 import android.text.TextPaint
 import androidx.compose.Composable
@@ -21,6 +22,7 @@ fun TextStyle.toPaint() : TextPaint {
     with(DensityAmbient.current) {
         res.textSize = this@toPaint.fontSize.toPx().value
     }
+    res.flags = Paint.ANTI_ALIAS_FLAG
     return res
 }
 
