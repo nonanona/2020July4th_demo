@@ -3,15 +3,16 @@ package com.example.newspapertemplate.compose
 import android.graphics.Point
 import android.graphics.Rect
 import android.util.Size
-import androidx.compose.Composable
-import androidx.compose.remember
-import androidx.compose.state
-import androidx.ui.core.Layout
-import androidx.ui.core.Modifier
-import androidx.ui.core.drawBehind
-import androidx.ui.graphics.drawscope.drawCanvas
-import androidx.ui.text.TextStyle
-import androidx.ui.unit.ipx
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import com.example.newspapertemplate.text.AdvancedTextLayout
 import com.example.newspapertemplate.text.LayoutContext
 import com.example.newspapertemplate.text.Line
@@ -116,25 +117,26 @@ fun ArticleText(
     template: ArticleTemplate,
     children: @Composable() () -> Unit
 ) {
-    val lastLayout = state<android.text.Layout?> { null }
-    val paint = remember(textStyle) { textStyle.toPaint() }
+    val lastLayout = remember { mutableStateOf<android.text.Layout?>(null) }
+    val density = LocalDensity.current
+    val paint = remember(textStyle, density) { textStyle.toPaint(density) }
     val callback = TEMPLATE_MAP[template] ?: throw RuntimeException("Unknown Tempalte: $template")
     Layout(
-        children = children,
+        content = children,
         modifier = modifier.drawBehind {
-            drawCanvas { canvas, _ ->
+            drawIntoCanvas { canvas ->
                 lastLayout.value?.draw(canvas.nativeCanvas)
             }
         }
-    ) { measurables, constraints, layoutDirection ->
+    ) { measurables, constraints ->
         val figure = measurables[0]
-        val placeable = figure.measure(constraints = constraints, layoutDirection = layoutDirection)
-        val size = Size(placeable.width.value, placeable.height.value)
+        val placeable = figure.measure(constraints = constraints)
+        val size = Size(placeable.width, placeable.height)
 
         val newLayout = AdvancedTextLayout.create(
             text = text,
             paint = paint,
-            widthConstraint = constraints.maxWidth.value,
+            widthConstraint = constraints.maxWidth,
             align = android.text.Layout.Alignment.ALIGN_NORMAL,
             nextPositionCallback = lambda@ { lines, word_w, word_h ->
                 callback.nextPosition(this, lines, word_w, word_h, size)
@@ -146,12 +148,12 @@ fun ArticleText(
         lastLayout.value = newLayout
 
         layout(
-            newLayout.width.ipx,
-            newLayout.height.ipx,
+            newLayout.width,
+            newLayout.height,
             mapOf()
         ) {
             val location = callback.figureLocation(newLayout.width, size)
-            placeable.place(location.x.ipx, location.y.ipx)
+            placeable.place(location.x, location.y)
         }
     }
 }

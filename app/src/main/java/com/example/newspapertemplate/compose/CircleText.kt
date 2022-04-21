@@ -3,24 +3,26 @@ package com.example.newspapertemplate.compose
 import android.graphics.Paint
 import android.graphics.Point
 import android.text.TextPaint
-import androidx.compose.Composable
-import androidx.compose.remember
-import androidx.compose.state
-import androidx.ui.core.DensityAmbient
-import androidx.ui.core.Layout
-import androidx.ui.core.Modifier
-import androidx.ui.core.drawBehind
-import androidx.ui.graphics.drawscope.drawCanvas
-import androidx.ui.text.TextStyle
-import androidx.ui.unit.ipx
-import androidx.ui.unit.toPx
+import android.util.Size
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Density
+import com.example.newspapertemplate.text.LayoutContext
+import com.example.newspapertemplate.text.Line
 import com.example.newspapertemplate.text.AdvancedTextLayout
 
-@Composable
-fun TextStyle.toPaint() : TextPaint {
+fun TextStyle.toPaint(density: Density) : TextPaint {
     val res = TextPaint()
-    with(DensityAmbient.current) {
-        res.textSize = this@toPaint.fontSize.toPx().value
+    with(density) {
+        res.textSize = this@toPaint.fontSize.toPx()
     }
     res.flags = Paint.ANTI_ALIAS_FLAG
     return res
@@ -32,24 +34,25 @@ fun CircleText(
     text: String,
     textStyle: TextStyle
 ) {
-    val lastLayout = state<android.text.Layout?> { null }
-    val paint = remember(textStyle) { textStyle.toPaint() }
+    val lastLayout = remember { mutableStateOf<android.text.Layout?>(null) }
+    val density = LocalDensity.current
+    val paint = remember(textStyle, density) { textStyle.toPaint(density) }
     Layout(
-        children = {},
+        content = {},
         modifier = modifier.drawBehind {
-            drawCanvas { canvas, _ ->
+            drawIntoCanvas { canvas, ->
                 lastLayout.value?.draw(canvas.nativeCanvas)
             }
         }
-    ) { measurables, constraints, layoutDirection ->
-        val CIRCLE_RAD = Math.min(constraints.maxWidth.toPx().value, constraints.maxHeight.toPx().value) / 2
-        val CIRCLE_C_X = constraints.maxWidth.toPx().value / 2
+    ) { measurables, constraints ->
+        val CIRCLE_RAD = Math.min(constraints.maxWidth, constraints.maxHeight) / 2
+        val CIRCLE_C_X = constraints.maxWidth / 2
         val CIRCLE_C_Y = CIRCLE_RAD
 
         val newLayout = AdvancedTextLayout.create(
             text = text,
             paint = paint,
-            widthConstraint = constraints.maxWidth.value,
+            widthConstraint = constraints.maxWidth,
             align = android.text.Layout.Alignment.ALIGN_NORMAL,
             nextPositionCallback = lambda@ { lines, w_width, w_height ->
                 if (lines.isEmpty()) {
@@ -78,6 +81,6 @@ fun CircleText(
         )
         lastLayout.value = newLayout
 
-        layout(newLayout.width.ipx, newLayout.height.ipx, mapOf()) {}
+        layout(newLayout.width, newLayout.height, mapOf()) {}
     }
 }

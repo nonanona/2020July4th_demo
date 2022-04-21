@@ -41,7 +41,7 @@ class AdvancedTextLayout private constructor(
     val lines: List<Line>
 ): Layout(text, paint, width, align, 1f, 0f) {
 
-    private val height_ = lines.maxBy { it.bottom }!!.bottom
+    private val height_ = lines.maxByOrNull { it.bottom }!!.bottom
 
     // Metrics
     override fun getHeight(): Int = height_
