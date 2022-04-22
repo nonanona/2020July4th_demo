@@ -119,12 +119,12 @@ val DEMOS = listOf(
             width - w
         },
         boundsDrawer = { canvas ->
-            canvas.drawCircle(
+            /*canvas.drawCircle(
                 CIRCLE_C_X.toFloat(),
                 CIRCLE_C_Y.toFloat(),
                 CIRCLE_RAD.toFloat(),
                 PAINT
-            )
+            )*/
         }
     )
 )

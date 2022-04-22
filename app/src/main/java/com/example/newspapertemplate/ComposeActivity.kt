@@ -23,7 +23,7 @@ import com.example.newspapertemplate.compose.ArticleText
 import com.example.newspapertemplate.compose.CircleText
 
 val STYLE = TextStyle(
-    fontSize = 16.sp
+    fontSize = 12.sp
 )
 
 val TITLE_STYLE = TextStyle(

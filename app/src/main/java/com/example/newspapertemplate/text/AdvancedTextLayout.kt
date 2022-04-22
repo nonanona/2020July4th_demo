@@ -80,7 +80,6 @@ class AdvancedTextLayout private constructor(
 
                     drawCanvas?.wordSpacing = wordSpacing
                     lines[line - 1].bottom
-
                 }
             }
             else -> if (line == lineCount) {
@@ -155,9 +154,15 @@ class AdvancedTextLayout private constructor(
     }
 
     var drawCanvas: CanvasWrapper? = null
-    override fun draw(c: Canvas) {
-        drawCanvas = CanvasWrapper(c)
-        super.draw(drawCanvas)
+
+    override fun draw(
+        canvas: Canvas,
+        highlight: Path?,
+        highlightPaint: Paint?,
+        cursorOffsetVertical: Int
+    ) {
+        drawCanvas = CanvasWrapper(canvas)
+        super.draw(drawCanvas, highlight, highlightPaint, cursorOffsetVertical)
         drawCanvas = null
     }
 

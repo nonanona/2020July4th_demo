@@ -40,9 +40,9 @@
             android:layout_height="wrap_content"
             android:id="@+id/article"
             android:text="@string/lorem_ipsum"
-            android:textSize="16sp"
+            android:textSize="12sp"
             android:layout_gravity="center"
-            android:textIsSelectable="true"
+
             />
     </FrameLayout>
 
