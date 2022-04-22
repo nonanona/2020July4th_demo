@@ -4,12 +4,12 @@ plugins {
 }
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 31
 
     defaultConfig {
         applicationId "com.example.newspapertemplate"
-        minSdkVersion 23
-        targetSdkVersion 32
+        minSdkVersion 29
+        targetSdkVersion 31
         versionCode 1
         versionName "1.0"
 

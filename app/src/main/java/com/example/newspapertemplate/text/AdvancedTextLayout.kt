@@ -1,7 +1,7 @@
 package com.example.newspapertemplate.text
 
 import android.annotation.SuppressLint
-import android.graphics.Point
+import android.graphics.*
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
@@ -19,7 +19,8 @@ data class Line(
     val ascent: Int,
     val descent: Int,
     val paraDirection: Int,
-    val directions: Layout.Directions
+    val directions: Layout.Directions,
+    val widthConstraint: Float
 ) {
     val height: Int = bottom - top
     val width: Int = Math.ceil(right.toDouble() - left).toInt()
@@ -66,7 +67,20 @@ class AdvancedTextLayout private constructor(
                 if (caller.lineNumber <= drawTextLineTopCallSite) {
                     lines[line].top
                 } else {
+
+                    // Hooking for setting word spacing
+                    val lineObj = lines[line - 1]
+                    val wsCount = countWhitespace(lineObj.start, lineObj.end)
+
+                    val wordSpacing = if (wsCount != 0 && line != lines.size) {
+                        (lineObj.widthConstraint - lineObj.width) / wsCount
+                    } else {
+                        0f
+                    }
+
+                    drawCanvas?.wordSpacing = wordSpacing
                     lines[line - 1].bottom
+
                 }
             }
             else -> if (line == lineCount) {
@@ -76,6 +90,93 @@ class AdvancedTextLayout private constructor(
             }
         }
     }
+
+    class CanvasWrapper(val c: Canvas) : Canvas() {
+
+        var wordSpacing: Float = 0f
+
+        override fun drawText(
+            text: CharSequence,
+            start: Int,
+            end: Int,
+            x: Float,
+            y: Float,
+            paint: Paint
+        ) {
+            paint.wordSpacing = wordSpacing
+            c.drawText(text, start, end, x, y, paint)
+        }
+
+        override fun translate(dx: Float, dy: Float) {
+            c.translate(dx, dy)
+        }
+
+        override fun drawPath(path: Path, paint: Paint) {
+            c.drawPath(path, paint)
+        }
+
+        override fun getClipBounds(bounds: Rect?): Boolean {
+            return c.getClipBounds(bounds)
+        }
+
+        override fun drawRect(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) {
+            c.drawRect(left, top, right, bottom, paint)
+        }
+
+        override fun drawTextRun(
+            text: CharSequence,
+            start: Int,
+            end: Int,
+            contextStart: Int,
+            contextEnd: Int,
+            x: Float,
+            y: Float,
+            isRtl: Boolean,
+            paint: Paint
+        ) {
+            paint.wordSpacing = wordSpacing
+            c.drawTextRun(text, start, end, contextStart, contextEnd, x, y, isRtl, paint)
+        }
+
+        override fun drawTextRun(
+            text: CharArray,
+            index: Int,
+            count: Int,
+            contextIndex: Int,
+            contextCount: Int,
+            x: Float,
+            y: Float,
+            isRtl: Boolean,
+            paint: Paint
+        ) {
+            paint.wordSpacing = wordSpacing
+            c.drawTextRun(text, index, count, contextIndex, contextCount, x, y, isRtl, paint)
+        }
+    }
+
+    var drawCanvas: CanvasWrapper? = null
+    override fun draw(c: Canvas) {
+        drawCanvas = CanvasWrapper(c)
+        super.draw(drawCanvas)
+        drawCanvas = null
+    }
+
+    fun countWhitespace(start: Int, end: Int): Int {
+        var c = 0
+        var seeNonSpace = false
+        val len = end - start
+        for (i in 0 until len) {
+            if (text[end - i - 1] == ' ') {
+                if (seeNonSpace) {
+                    c++
+                }
+            } else {
+                seeNonSpace = true
+            }
+        }
+        return c
+    }
+
     override fun getLineLeft(line: Int): Float {
         val caller = Thread.currentThread().stackTrace[3]
         if (caller.methodName == "bringPointIntoView") return 0f
@@ -107,6 +208,8 @@ class AdvancedTextLayout private constructor(
 
     // Overriding hidden API
     fun getIndentAdjust(line: Int, alignment: Alignment): Int = lines[line].left.toInt()
+
+
 
     // The original getLineForVertical returns upperBounds but needs to draw lowerBounds if multiple
     // lines in the same line.
@@ -186,7 +289,8 @@ class AdvancedTextLayout private constructor(
                 ascent = layout.getLineAscent(0),
                 descent = layout.getLineDescent(0),
                 paraDirection = layout.getParagraphDirection(0),
-                directions = layout.getLineDirections(0)
+                directions = layout.getLineDirections(0),
+                widthConstraint = width.toFloat(),
             )
         }
 
