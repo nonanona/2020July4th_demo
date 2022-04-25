@@ -70,7 +70,9 @@ class AdvancedTextLayout private constructor(
 
                     // Hooking for setting word spacing
                     val lineObj = lines[line - 1]
-                    val wsCount = countWhitespace(lineObj.start, lineObj.end)
+                    //val wsCount = countWhitespace(lineObj.start, lineObj.end)
+                    val wsCount = VisibleChars(lineObj.start, lineObj.end)
+                    //val wsCount = lineObj.end - lineObj.start
 
                     val wordSpacing = if (wsCount != 0 && line != lines.size) {
                         (lineObj.widthConstraint - lineObj.width) / wsCount
@@ -102,7 +104,7 @@ class AdvancedTextLayout private constructor(
             y: Float,
             paint: Paint
         ) {
-            paint.wordSpacing = wordSpacing
+            paint.letterSpacing = wordSpacing / paint.textSize
             c.drawText(text, start, end, x, y, paint)
         }
 
@@ -133,7 +135,7 @@ class AdvancedTextLayout private constructor(
             isRtl: Boolean,
             paint: Paint
         ) {
-            paint.wordSpacing = wordSpacing
+            paint.letterSpacing = wordSpacing / paint.textSize
             c.drawTextRun(text, start, end, contextStart, contextEnd, x, y, isRtl, paint)
         }
 
@@ -148,7 +150,7 @@ class AdvancedTextLayout private constructor(
             isRtl: Boolean,
             paint: Paint
         ) {
-            paint.wordSpacing = wordSpacing
+            paint.letterSpacing = wordSpacing / paint.textSize
             c.drawTextRun(text, index, count, contextIndex, contextCount, x, y, isRtl, paint)
         }
     }
@@ -180,6 +182,17 @@ class AdvancedTextLayout private constructor(
             }
         }
         return c
+    }
+
+    fun VisibleChars(start: Int, end: Int): Int {
+        var seeNonSpace = false
+        val len = end - start
+        for (i in 0 until len) {
+            if (text[end - i - 1] != ' ') {
+                return end - i - start
+            }
+        }
+        return 0
     }
 
     override fun getLineLeft(line: Int): Float {
